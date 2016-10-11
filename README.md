@@ -1,8 +1,6 @@
-CAB403Assignment
+# Project guidelines:
 
-Project guidelines:
-
-Libraries:
+## Libraries:
 
 "stdint.h"  to be used for types wherever possible
 
@@ -10,11 +8,11 @@ https://en.wikibooks.org/wiki/C_Programming/C_Reference/stdint.h
 
 "stdbool.h" to be used for boolean types
 
-Build tools:
+## Build tools:
 
 Makefile -> one provided already that compiles all .c files inside the current folder to a program "CAB403_UrviP_NathanP"
 
-Debugging:
+## Debugging:
 
 valgrind to be run after compilation to determine any memory errors
 
