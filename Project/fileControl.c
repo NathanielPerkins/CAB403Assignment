@@ -1,5 +1,6 @@
 #include "fileControl.h"
 
+
 int8_t get_file_dimensions(const char *file_location, int16_t *lines, int16_t *width){
     FILE *fp;
     int8_t current_char;
@@ -24,16 +25,18 @@ int8_t get_file_dimensions(const char *file_location, int16_t *lines, int16_t *w
     return 1;
 }
 
+
 int8_t open_Accounts(struct Account **all_accounts){
-    const char* accounts = "Database/Accounts.txt";
+    const char* accounts = "Accounts.txt";
     int16_t num_accounts;
     int16_t width;
     int8_t success = get_file_dimensions(accounts,&num_accounts,&width);
+    printf("Opening Accounts.txt\n");
     if(!success){
         printf("open_Accounts function closing with couldn't open file error\n");
         return 0;
     }
-    *all_accounts = (struct Account*)malloc(sizeof(struct Account)*(num_accounts-1));
+    *all_accounts = (struct Account*)malloc(sizeof(struct Account)*(num_accounts));
     FILE *fp;
     fp = fopen(accounts,"r");
     if (fp == NULL) {
@@ -51,19 +54,24 @@ int8_t open_Accounts(struct Account **all_accounts){
             i++;
         }
         char *token;
-        token = strtok(line, " ");
-        while(token != NULL){
-            printf("token = %s\n",token);
-            printf("Accessing all_accounts[%d]\n",num);
-            all_accounts[num]->accountNo = atoi(token);
-            token = strtok(NULL, " ");
-            printf("Finished\n");
-        }
-        printf("%d\n",num);
-        printf("Account[%d].accountNo = %d",num,all_accounts[num]->accountNo);
+        token = strtok(line, " "); //tokenize the string, removing " " characters
+        (*all_accounts)[num].accountNo = strtol(token,NULL,10);
+        token = strtok(NULL, " "); // advance to next filled section
+        (*all_accounts)[num].openBal = strtod(token,NULL);
+        token = strtok(NULL, " "); // advance to next filled section
+        (*all_accounts)[num].closeBal = strtod(token,NULL);
+
         num++;
+        if (num == num_accounts - 1){
+            while(!feof(fp)) fgetc(fp); //Advance to the end of file
+        }
     } while (!feof(fp));
-    printf("EXITED");
     fclose(fp);
+    printf("Closing Accounts.txt\n");
+    return num_accounts - 1;
+}
+
+int8_t open_Client_details(struct Account **all_accounts){
+
     return 1;
 }

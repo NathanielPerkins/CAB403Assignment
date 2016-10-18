@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
 int8_t logon(int16_t sockfd){
 	char username[20];
 	char password[20];
+	char auth[2];
+	int8_t conn;
 	printf("=========================================================\n");
 	printf("\n       Welcome to PatelPerkins Online Banking\n\n");
 	printf("=========================================================\n");
@@ -73,8 +75,20 @@ int8_t logon(int16_t sockfd){
 	scanf("%s",username);
 	printf("Please input your Password ----> ");
 	scanf("%s",password);
-	send(sockfd,username,20,0);
-	send(sockfd,password,20,0);
+	if(send(sockfd,username,20,0) == -1){
+		printf("Error sending username\n");
+	}
+	if(send(sockfd,password,20,0) == -1){
+		printf("Error sending password\n");
+	}
 
+	if((conn = recv(sockfd,auth,2,0)) == -1){
+		printf("Error receiving authentication token\n");
+	}
+	if((conn = strtol(auth,NULL,10)) == 0){
+		printf("Password or username is incorrect: Closing Client\n");
+		return 0;
+	}
+	printf("%s successfully loged on\n",username);
 	return 1;
 }

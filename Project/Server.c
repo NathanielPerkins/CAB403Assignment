@@ -71,6 +71,8 @@ int main(int argc, char *argv[]){
 			password[20] = '\0';
 			printf("Username: %s\n",username);
 			printf("Password: %s\n",password);
+			if (send(new_fd, "1", 2, 0) == -1)
+				perror("send");
 			close(new_fd);
 			exit(0);
 		}
