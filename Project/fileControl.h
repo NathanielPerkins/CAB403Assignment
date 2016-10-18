@@ -10,7 +10,27 @@
 struct Account {
     int32_t accountNo;
     double openBal;
+    double currentBal;
     double closeBal;
+    int8_t type;
+};
+
+struct Client_Details{
+    char firstN[20];
+    char lastN[20];
+    char username[20];
+    int32_t pin;
+    int32_t clientNo;
+    struct Account *loan;       // can only have 1
+    struct Account *cheque;     // can only have 1
+    struct Account *savings;    // can only have 1
+};
+
+struct Transaction{
+    struct Account *fromAcct;
+    struct Account *toAcct;
+    double amount;
+    int8_t type;
 };
 
 int8_t get_file_dimensions(const char *file_location, int16_t *lines, int16_t *width);
