@@ -15,20 +15,20 @@ struct Account {
     int8_t type;
 };
 
-struct Client_Details{
+struct Client{
     char firstN[20];
     char lastN[20];
     char username[20];
     int32_t pin;
     int32_t clientNo;
-    struct Account *loan;       // can only have 1
-    struct Account *cheque;     // can only have 1
-    struct Account *savings;    // can only have 1
+    int32_t loanAcctNo;
+    int32_t savAcctNo;
+    int32_t chequeAcctNo;
 };
 
 struct Transaction{
-    struct Account *fromAcct;
-    struct Account *toAcct;
+    int32_t fromAcct;
+    int32_t *toAcct;
     double amount;
     int8_t type;
 };
@@ -45,6 +45,8 @@ number of accounts in the array
 */
 int8_t open_Accounts(struct Account **all_accounts);
 
-int8_t open_Client_details(struct Account **all_accounts);
+int8_t open_Clients(struct Client **all_accounts);
+
+void Client_Init(struct Client *client);
 
 #endif
