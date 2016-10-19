@@ -79,12 +79,12 @@ int8_t open_Clients(struct Client **clients){
     int8_t success = get_file_dimensions(file_name,&num_clients,&width);
     FILE *fp;
     if(!success){
-        printf("open_Accounts function closing with couldn't open file error\n");
+        printf("OC: function closing with couldn't open file error\n");
         return 0;
     }
     fp = fopen(file_name, "r");
     if (fp == NULL) {
-        printf("oa: Couldn't Open file: %s\n",file_name);
+        printf("OC: Couldn't Open file: %s\n",file_name);
     }
     *clients = (struct Client*)malloc(sizeof(struct Client)*(num_clients));
     char current_char = ' ';
@@ -139,6 +139,54 @@ int8_t open_Clients(struct Client **clients){
         }
         num++;
         if (num == num_clients - 1){
+            while(!feof(fp)) fgetc(fp); //Advance to the end of file
+        }
+    } while (!feof(fp));
+
+
+    fclose(fp);
+    return num_clients - 1;
+}
+
+int8_t open_auth(struct Client *clients){
+    printf("Entered\n");
+    const char* file_name = "Authentication.txt";
+    int16_t num_clients;
+    int16_t width;
+    int8_t success = get_file_dimensions(file_name,&num_clients,&width);
+    printf("Test\n");
+    FILE *fp;
+    if(!success){
+        printf("OA: function closing with couldn't open file error\n");
+        return 0;
+    }
+    fp = fopen(file_name, "r");
+    if (fp == NULL) {
+        printf("OA: Couldn't Open file: %s\n",file_name);
+    }
+    printf("Opening %s\n",file_name);
+    char current_char = ' ';
+    int8_t num = 0;
+    while(fgetc(fp) != '\n') {} // parse over the header
+    do {
+        // printf("Line[%d]\n",num);
+        int8_t i = 0;
+        char line[width];
+        memset(line,0,width);
+        while((current_char = fgetc(fp)) != '\n'){
+            line[i] = current_char;
+            i++;
+        }
+        char *token;
+        token = strtok(line, " \n\t"); //tokenize the string, removing " " characters
+        memcpy(clients[num].username,token,strlen(token));
+        token = strtok(NULL, " \n\t"); // advance to next filled section
+        clients[num].pin = strtol(token,NULL,10);
+        token = strtok(NULL, " \n\t"); // advance to next filled section
+        clients[num].clientNo = strtol(token,NULL,10);
+        num++;
+        if (num == num_clients - 1){
+            printf("clients: %d\n",num_clients);
             while(!feof(fp)) fgetc(fp); //Advance to the end of file
         }
     } while (!feof(fp));

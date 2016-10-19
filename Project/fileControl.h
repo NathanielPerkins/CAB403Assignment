@@ -45,7 +45,9 @@ number of accounts in the array
 */
 int8_t open_Accounts(struct Account **all_accounts);
 
-int8_t open_Clients(struct Client **all_accounts);
+int8_t open_Clients(struct Client **all_clients);
+
+int8_t open_auth(struct Client *all_clients);
 
 void Client_Init(struct Client *client);
 
