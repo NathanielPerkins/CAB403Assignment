@@ -18,8 +18,16 @@
 #define MAX_CONNECTIONS 10
 void  INThandler(int sig);
 
-int main(int argc, char *argv[]){
+struct Account *accounts;
+struct Client *clients;
 
+int16_t num_clients;
+int16_t num_accounts;
+
+void setup_database();
+
+int main(int argc, char *argv[]){
+	setup_database();
     int16_t port = PORT;
     int16_t sockfd, new_fd;  /* listen on sock_fd, new connection on new_fd */
     struct sockaddr_in my_addr;    /* my address information */
@@ -88,6 +96,26 @@ void  INThandler(int sig)
     printf("Signal Received: %d\n",sig);
     if(sig == 2){
         printf("Closing the Server\n");
-        exit(0);
-    }
+		printf("Freeing Clients\n");
+		free(clients);
+		printf("Freeing Accounts\n");
+		free(accounts);
+		exit(0);
+	}
+}
+
+void setup_database(){
+	printf("Importing database system\n");
+	printf("Importing Clients\n");
+	num_clients = open_Clients(&clients);
+	printf("Total Clients imported: %d\n",num_clients);
+	printf("Importing Authentication\n");
+	int8_t temp = open_auth(clients);
+	if (temp != num_clients){
+		printf("Error: Auth file doesn't match client details\n");
+		printf("OA clients: %d\n",temp);
+	}
+	printf("Importing Accounts\n");
+	num_accounts = open_Accounts(&accounts);
+	printf("Total Acccounts Imported: %d\n",num_accounts);
 }

@@ -3,25 +3,36 @@
 
 int8_t get_file_dimensions(const char *file_location, int16_t *lines, int16_t *width){
     FILE *fp;
-    int8_t current_char;
-    int16_t max_width = 0;
-    int16_t curr_width = 0;
     (*lines) = 0;
+    (*width) = 0;
+
     fp = fopen(file_location,"r");
     if (fp == NULL) {
         printf("gfd: Couldn't open file: %s\n",file_location);
         return 0;
     }
-    do {
-        curr_width++;
-        current_char = fgetc(fp);
-        if (current_char == '\n'){
-            (*lines)++;
-            if (curr_width > max_width) max_width = curr_width;
-            curr_width = 0;
-        }
-    } while(!feof(fp));
-    (*width) = max_width;
+    uint64_t buf_size = 300;
+    char *buffer = (char*)malloc(sizeof(char)*buf_size);
+    int8_t num = 0;
+    // printf("gfd: Opened %s\n",file_location);
+    getline(&buffer,&buf_size,fp); // get header file
+    while (getline(&buffer,&buf_size,fp) != -1){
+        // printf("%s",buffer);
+        if (strlen(buffer) > 20) num++;
+        if (strlen(buffer) > (uint16_t)*width) (*width) = strlen(buffer);
+    }
+    // printf("Exited the loop\n");
+    (*lines) = num;
+    // do {
+    //     curr_width++;
+    //     current_char = fgetc(fp);
+    //     if (current_char == '\n'){
+    //         (*lines)++;
+    //         if (curr_width > max_width) max_width = curr_width;
+    //         curr_width = 0;
+    //     }
+    // } while(!feof(fp));
+    // (*width) = max_width;
     fclose(fp);
     return 1;
 }
@@ -32,7 +43,6 @@ int8_t open_Accounts(struct Account **all_accounts){
     int16_t num_accounts;
     int16_t width;
     int8_t success = get_file_dimensions(accounts,&num_accounts,&width);
-    printf("Opening Accounts.txt\n");
     if(!success){
         printf("open_Accounts function closing with couldn't open file error\n");
         return 0;
@@ -68,7 +78,6 @@ int8_t open_Accounts(struct Account **all_accounts){
         }
     } while (!feof(fp));
     fclose(fp);
-    printf("Closing Accounts.txt\n");
     return num_accounts - 1;
 }
 
@@ -149,12 +158,10 @@ int8_t open_Clients(struct Client **clients){
 }
 
 int8_t open_auth(struct Client *clients){
-    printf("Entered\n");
     const char* file_name = "Authentication.txt";
     int16_t num_clients;
     int16_t width;
     int8_t success = get_file_dimensions(file_name,&num_clients,&width);
-    printf("Test\n");
     FILE *fp;
     if(!success){
         printf("OA: function closing with couldn't open file error\n");
@@ -164,7 +171,6 @@ int8_t open_auth(struct Client *clients){
     if (fp == NULL) {
         printf("OA: Couldn't Open file: %s\n",file_name);
     }
-    printf("Opening %s\n",file_name);
     char current_char = ' ';
     int8_t num = 0;
     while(fgetc(fp) != '\n') {} // parse over the header
@@ -186,14 +192,13 @@ int8_t open_auth(struct Client *clients){
         clients[num].clientNo = strtol(token,NULL,10);
         num++;
         if (num == num_clients - 1){
-            printf("clients: %d\n",num_clients);
             while(!feof(fp)) fgetc(fp); //Advance to the end of file
         }
     } while (!feof(fp));
 
 
     fclose(fp);
-    return num_clients - 1;
+    return num;
 }
 
 void Client_Init(struct Client *client){
