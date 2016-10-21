@@ -73,13 +73,19 @@ int main(int argc, char *argv[]){
 				perror("send");
 			char username[20];
 			char password[20];
-			recv(new_fd,username, 20,0);
-			recv(new_fd,password, 20,0);
-			username[20] = '\0';
-			password[20] = '\0';
-			printf("Username: %s\n",username);
-			printf("Password: %s\n",password);
-			if (send(new_fd, "1", 2, 0) == -1)
+			int8_t un_len = recv(new_fd,username, 20,0);
+			int8_t pin_len = recv(new_fd,password, 20,0);
+			username[un_len] = '\0';
+			password[pin_len] = '\0';
+			printf("Username: %d|%s\n",(int8_t)strlen(username),username);
+			printf("Password: %d|%s\n",(int8_t)strlen(password),password);
+			// for all clients check if username + password exist
+			// if it does exist, then autheroize logon
+			// if not send unauth
+
+			int8_t ind = username_exists(clients,num_clients,username);
+			printf("Username index: %d\n",ind);
+			if (send(new_fd, "Auth", 4, 0) == -1)
 				perror("send");
 			close(new_fd);
 			exit(0);
@@ -98,24 +104,32 @@ void  INThandler(int sig)
         printf("Closing the Server\n");
 		printf("Freeing Clients\n");
 		free(clients);
+		// need to write new account balances
 		printf("Freeing Accounts\n");
 		free(accounts);
+		// need to write transaction history to text file
 		exit(0);
 	}
 }
 
 void setup_database(){
-	printf("Importing database system\n");
+	int16_t MAX_WIDTH;
+	printf("---------------DATABASE SYSTEM SETUP---------------\n");
 	printf("Importing Clients\n");
-	num_clients = open_Clients(&clients);
-	printf("Total Clients imported: %d\n",num_clients);
+	const char *CD = "Client_Details.txt";
+	get_file_dimensions(CD,&num_clients,&MAX_WIDTH);
+	clients = (struct Client*)calloc(num_clients, sizeof(struct Client));
+	open_CD(clients,num_clients,MAX_WIDTH);
 	printf("Importing Authentication\n");
-	int8_t temp = open_auth(clients);
-	if (temp != num_clients){
-		printf("Error: Auth file doesn't match client details\n");
-		printf("OA clients: %d\n",temp);
-	}
+	const char *Auth = "Authentication.txt";
+	get_file_dimensions(Auth,&num_clients,&MAX_WIDTH);
+	open_Au(clients,num_clients,MAX_WIDTH);
+	printf("Total Clients imported: %d\n",num_clients);
 	printf("Importing Accounts\n");
-	num_accounts = open_Accounts(&accounts);
+	const char *ACC = "Accounts.txt";
+	get_file_dimensions(ACC,&num_accounts,&MAX_WIDTH);
+	accounts = (struct Account*)calloc(num_accounts,sizeof(struct Account));
+	open_Acc(accounts,num_accounts,MAX_WIDTH);
 	printf("Total Acccounts Imported: %d\n",num_accounts);
+	printf("-----------------DATABASE IMPORTED-----------------\n\n");
 }

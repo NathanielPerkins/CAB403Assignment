@@ -9,198 +9,116 @@ int8_t get_file_dimensions(const char *file_location, int16_t *lines, int16_t *w
     fp = fopen(file_location,"r");
     if (fp == NULL) {
         printf("gfd: Couldn't open file: %s\n",file_location);
-        return 0;
+        return 1;
     }
     uint64_t buf_size = 300;
     char *buffer = (char*)malloc(sizeof(char)*buf_size);
     int8_t num = 0;
-    // printf("gfd: Opened %s\n",file_location);
     getline(&buffer,&buf_size,fp); // get header file
     while (getline(&buffer,&buf_size,fp) != -1){
-        // printf("%s",buffer);
         if (strlen(buffer) > 20) num++;
         if (strlen(buffer) > (uint16_t)*width) (*width) = strlen(buffer);
     }
-    // printf("Exited the loop\n");
     (*lines) = num;
-    // do {
-    //     curr_width++;
-    //     current_char = fgetc(fp);
-    //     if (current_char == '\n'){
-    //         (*lines)++;
-    //         if (curr_width > max_width) max_width = curr_width;
-    //         curr_width = 0;
-    //     }
-    // } while(!feof(fp));
-    // (*width) = max_width;
+
     fclose(fp);
-    return 1;
+    return 0;
 }
 
-
-int8_t open_Accounts(struct Account **all_accounts){
-    const char* accounts = "Accounts.txt";
-    int16_t num_accounts;
-    int16_t width;
-    int8_t success = get_file_dimensions(accounts,&num_accounts,&width);
-    if(!success){
-        printf("open_Accounts function closing with couldn't open file error\n");
-        return 0;
-    }
-    *all_accounts = (struct Account*)malloc(sizeof(struct Account)*(num_accounts));
+void open_CD(struct Client *clients, int8_t num_clients, int8_t MAX_WIDTH){
+    const char *filename = "Client_Details.txt";
     FILE *fp;
-    fp = fopen(accounts,"r");
-    if (fp == NULL) {
-        printf("oa: Couldn't Open file: %s\n",accounts);
+    fp = fopen(filename, "r");
+    uint64_t buf_len = MAX_WIDTH;
+    if (fp == NULL){
+        printf("OCD: Couldn't load %s\n",filename);
     }
-    while(fgetc(fp) != '\n') {} // parse over the header
-    int8_t current_char = ' ';
-    int8_t num = 0;
-    do {
-        // Look into strtok and strdup for file I/O
-        char line[width];
-        int8_t i = 0;
-        while((current_char = fgetc(fp)) != '\n'){
-            line[i] = current_char;
-            i++;
+    char *buffer = (char*)calloc(MAX_WIDTH,sizeof(char));
+    getline(&buffer,&buf_len,fp);
+    memset(buffer,0,buf_len);
+    for (int8_t i = 0; i< num_clients;i++){
+        getline(&buffer,&buf_len,fp);
+        char *token = strtok(buffer, " \t");
+        memcpy(clients[i].firstN,token,strlen(token));
+        token = strtok(NULL, " \t");
+        memcpy(clients[i].lastN,token,strlen(token));
+        token = strtok(NULL, " \t");
+        clients[i].clientNo = strtol(token,NULL,10);
+        token = strtok(NULL, " ,\t\n");
+        while (token != NULL){
+            int32_t acctNo = strtol(token,NULL,10);
+            if (acctNo%11==0) clients[i].savAcctNo = acctNo;
+            if (acctNo%12==0) clients[i].loanAcctNo = acctNo;
+            if (acctNo%13==0) clients[i].chequeAcctNo = acctNo;
+            token = strtok(NULL, " ,\t\n");
         }
-        char *token;
-        token = strtok(line, " "); //tokenize the string, removing " " characters
-        (*all_accounts)[num].accountNo = strtol(token,NULL,10);
-        token = strtok(NULL, " "); // advance to next filled section
-        (*all_accounts)[num].openBal = strtod(token,NULL);
-        token = strtok(NULL, " "); // advance to next filled section
-        (*all_accounts)[num].closeBal = strtod(token,NULL);
-
-        num++;
-        if (num == num_accounts - 1){
-            while(!feof(fp)) fgetc(fp); //Advance to the end of file
-        }
-    } while (!feof(fp));
+        memset(buffer,0,buf_len);
+    }
+    free(buffer);
     fclose(fp);
-    return num_accounts - 1;
 }
-
-int8_t open_Clients(struct Client **clients){
-    const char* file_name = "Client_Details.txt";
-    int16_t num_clients;
-    int16_t width;
-    int8_t success = get_file_dimensions(file_name,&num_clients,&width);
+void open_Au(struct Client *clients, int8_t num_clients, int8_t MAX_WIDTH){
+    const char *filename = "Authentication.txt";
     FILE *fp;
-    if(!success){
-        printf("OC: function closing with couldn't open file error\n");
-        return 0;
+    fp = fopen(filename, "r");
+    uint64_t buf_len = MAX_WIDTH;
+    if (fp == NULL){
+        printf("OAU: Couldn't load %s\n",filename);
     }
-    fp = fopen(file_name, "r");
-    if (fp == NULL) {
-        printf("OC: Couldn't Open file: %s\n",file_name);
-    }
-    *clients = (struct Client*)malloc(sizeof(struct Client)*(num_clients));
-    char current_char = ' ';
-    int8_t num = 0;
-    while(fgetc(fp) != '\n') {} // parse over the header
-    do {
-        Client_Init(&(*clients)[num]);
-        int8_t i = 0;
-        char line[width];
-        memset(line,0,width);
-        while((current_char = fgetc(fp)) != '\n'){
-            line[i] = current_char;
-            i++;
-        }
-
-        char *token;
-
-        token = strtok(line, " "); //tokenize the string up till first " ": First Name
-        // printf("Line[%d]:\t",num);
-        memcpy((*clients)[num].firstN,token,strlen(token)+1);
-        // printf("|%s|",(*clients)[num].firstN);
-
-        token = strtok(NULL, " "); // advance to next filled section: Last Name
-        memcpy((*clients)[num].lastN,token,strlen(token)+1);
-        // printf("|%s|",(*clients)[num].lastN);
-
-        token = strtok(NULL, " "); // advance to next filled section: ClientNo
-        (*clients)[num].clientNo = strtol(token,NULL,10);
-        // printf("CN: %d\t",(*clients)[num].clientNo);
-        token = strtok(NULL, "\n");
-
-        int8_t num_accounts = 1;
-        for (int j = 0; token[j] != '\0';j++){
-            if (token[j] == ',') num_accounts++;
-        }
-        char *token2;
-        token2 = strtok(token, " ");
-        // token2 = strtok(NULL, ",");
-        // printf("%s",token2);
-        char account[9];
-        for (int j = 0; j<num_accounts; j++){
-            for (int k = 0; k<8; k++){
-                account[k] = token2[k];
+    char *buffer = (char*)calloc(MAX_WIDTH,sizeof(char));
+    getline(&buffer,&buf_len,fp);
+    memset(buffer,0,buf_len);
+    for (int8_t i = 0; i< num_clients;i++){
+        getline(&buffer,&buf_len,fp);
+        char *token = strtok(buffer, " \t");
+        char username[20] = {0};
+        memcpy(username,token,strlen(token));
+        token = strtok(NULL, " \t");
+        int32_t pin = strtol(token,NULL,10);
+        token = strtok(NULL, " \t\n");
+        int32_t clientNo = strtol(token,NULL,10);
+        for (int8_t j = 0;j<num_clients;j++){
+            if (clients[i].clientNo == clientNo){
+                memcpy(clients[i].username,username,strlen(username));
+                clients[i].pin = pin;
+                break;
             }
-            account[8] = '\0';
-            int32_t acctNo = strtol(account,NULL,10);
-            if      (acctNo%11 == 0) (*clients)[num].savAcctNo = acctNo;
-            else if (acctNo%12 == 0) (*clients)[num].loanAcctNo = acctNo;
-            else if (acctNo%13 == 0) (*clients)[num].chequeAcctNo = acctNo;
-            else printf("Account number %d shouldn't exist",acctNo);
-            token2 += 9; // Account number is 8 long + ','
         }
-        num++;
-        if (num == num_clients - 1){
-            while(!feof(fp)) fgetc(fp); //Advance to the end of file
-        }
-    } while (!feof(fp));
-
-
+        memset(buffer,0,buf_len);
+    }
+    free(buffer);
     fclose(fp);
-    return num_clients - 1;
 }
 
-int8_t open_auth(struct Client *clients){
-    const char* file_name = "Authentication.txt";
-    int16_t num_clients;
-    int16_t width;
-    int8_t success = get_file_dimensions(file_name,&num_clients,&width);
+void open_Acc(struct Account *accounts, int8_t num_accounts, int8_t MAX_WIDTH){
+    const char *filename = "Accounts.txt";
     FILE *fp;
-    if(!success){
-        printf("OA: function closing with couldn't open file error\n");
-        return 0;
+    fp = fopen(filename, "r");
+    uint64_t buf_len = MAX_WIDTH;
+    if (fp == NULL){
+        printf("OACC: Couldn't load %s\n",filename);
     }
-    fp = fopen(file_name, "r");
-    if (fp == NULL) {
-        printf("OA: Couldn't Open file: %s\n",file_name);
+    char *buffer = (char*)calloc(MAX_WIDTH,sizeof(char));
+    getline(&buffer,&buf_len,fp);
+    memset(buffer,0,buf_len);
+    for (int8_t i = 0; i< num_accounts;i++){
+        getline(&buffer,&buf_len,fp);
+
+        char *token = strtok(buffer," \t");
+        accounts[i].accountNo = strtol(token,NULL,10);
+        token = strtok(NULL," \t");
+        accounts[i].openBal = strtof(token,NULL);
+        token = strtok(NULL," \t");
+        accounts[i].currentBal = strtof(token,NULL);
+        if(accounts[i].accountNo%11 == 0) accounts[i].type = 0;
+        if(accounts[i].accountNo%12 == 0) accounts[i].type = 1;
+        if(accounts[i].accountNo%13 == 0) accounts[i].type = 2;
+
+        memset(buffer,0,buf_len);
     }
-    char current_char = ' ';
-    int8_t num = 0;
-    while(fgetc(fp) != '\n') {} // parse over the header
-    do {
-        // printf("Line[%d]\n",num);
-        int8_t i = 0;
-        char line[width];
-        memset(line,0,width);
-        while((current_char = fgetc(fp)) != '\n'){
-            line[i] = current_char;
-            i++;
-        }
-        char *token;
-        token = strtok(line, " \n\t"); //tokenize the string, removing " " characters
-        memcpy(clients[num].username,token,strlen(token));
-        token = strtok(NULL, " \n\t"); // advance to next filled section
-        clients[num].pin = strtol(token,NULL,10);
-        token = strtok(NULL, " \n\t"); // advance to next filled section
-        clients[num].clientNo = strtol(token,NULL,10);
-        num++;
-        if (num == num_clients - 1){
-            while(!feof(fp)) fgetc(fp); //Advance to the end of file
-        }
-    } while (!feof(fp));
-
-
+    free(buffer);
     fclose(fp);
-    return num;
 }
-
 void Client_Init(struct Client *client){
     memset(client->firstN,0,20);
     memset(client->lastN,0,20);
@@ -210,4 +128,19 @@ void Client_Init(struct Client *client){
     client->loanAcctNo = 0;
     client->savAcctNo = 0;
     client->chequeAcctNo = 0;
+}
+
+int8_t username_exists(struct Client *clients,int8_t num_clients,char *username){
+    printf("UE: num_clients = %d\n",num_clients);
+    printf("UE: %d\n",clients[9].pin);
+    for(int16_t i = 0; i < num_clients; i++){
+        if(!strcmp(username,clients[i].username)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool pin_correct(struct Client client,char pin){
+    return (client.pin == pin);
 }

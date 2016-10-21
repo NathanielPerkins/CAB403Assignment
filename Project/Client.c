@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	port = strtol(argv[2],NULL,10);
+	// setup socket information
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("socket");
 		exit(1);
@@ -47,6 +48,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// Enter communication mode
 	if ((numbytes=recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
 		perror("recv");
 		exit(1);
@@ -66,14 +68,14 @@ int main(int argc, char *argv[])
 int8_t logon(int16_t sockfd){
 	char username[20];
 	char password[20];
-	char auth[2];
+	char auth[20];
 	int8_t conn;
 	printf("=========================================================\n");
 	printf("\n       Welcome to PatelPerkins Online Banking\n\n");
 	printf("=========================================================\n");
 	printf("\nPlease input your Username ----> ");
 	scanf("%s",username);
-	printf("Please input your Password ----> ");
+	printf("Please input your Pin      ----> ");
 	scanf("%s",password);
 	if(send(sockfd,username,20,0) == -1){
 		printf("Error sending username\n");
@@ -82,13 +84,17 @@ int8_t logon(int16_t sockfd){
 		printf("Error sending password\n");
 	}
 
-	if((conn = recv(sockfd,auth,2,0)) == -1){
+	if((conn = recv(sockfd,auth,20,0)) == -1){
 		printf("Error receiving authentication token\n");
 	}
-	if((conn = strtol(auth,NULL,10)) == 0){
+	auth[conn] = '\0';
+	if(!strcmp(auth, "Auth")){
 		printf("Password or username is incorrect: Closing Client\n");
 		return 0;
 	}
-	printf("%s successfully loged on\n",username);
+	printf("%s successfully loged on: %s\n",username, auth);
+	for (int i = 0;i<5;i++){
+		printf("%c",auth[i]);
+	}
 	return 1;
 }

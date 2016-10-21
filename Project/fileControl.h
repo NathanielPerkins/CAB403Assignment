@@ -43,12 +43,13 @@ memory address to desired array of structs
 return: int8_t
 number of accounts in the array
 */
-int8_t open_Accounts(struct Account **all_accounts);
-
-int8_t open_Clients(struct Client **all_clients);
-
-int8_t open_auth(struct Client *all_clients);
+void open_CD(struct Client *clients, int8_t num_clients, int8_t MAX_WIDTH);
+void open_Au(struct Client *clients, int8_t num_clients, int8_t MAX_WIDTH);
+void open_Acc(struct Account *accounts, int8_t num_accounts, int8_t MAX_WIDTH);
 
 void Client_Init(struct Client *client);
+
+int8_t username_exists(struct Client *clients,int8_t num_clients,char *username);
+bool pin_correct(struct Client client,char pin);
 
 #endif
