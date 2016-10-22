@@ -16,6 +16,7 @@
 
 #define PORT 12345
 #define MAX_CONNECTIONS 10
+#define MAXDATASIZE 200
 void  INThandler(int sig);
 
 struct Account *accounts;
@@ -73,20 +74,33 @@ int main(int argc, char *argv[]){
 				perror("send");
 			char username[20];
 			char password[20];
+			char buffer[MAXDATASIZE];
+			memset(buffer,0,MAXDATASIZE);
 			int8_t un_len = recv(new_fd,username, 20,0);
 			int8_t pin_len = recv(new_fd,password, 20,0);
 			username[un_len] = '\0';
 			password[pin_len] = '\0';
-			printf("Username: %d|%s\n",(int8_t)strlen(username),username);
-			printf("Password: %d|%s\n",(int8_t)strlen(password),password);
-			// for all clients check if username + password exist
-			// if it does exist, then autheroize logon
-			// if not send unauth
 
 			int8_t ind = username_exists(clients,num_clients,username);
-			printf("Username index: %d\n",ind);
-			if (send(new_fd, "Auth", 4, 0) == -1)
-				perror("send");
+			bool logged_on = false;
+			if (ind != -1){
+				logged_on = pin_correct(clients[ind],strtol(password,NULL,10));
+			}
+			if (logged_on){
+				if (send(new_fd, "Auth", 20, 0) == -1) perror("send");
+				printf("client[%d]: %s %s logged on\n",ind,clients[ind].firstN,clients[ind].lastN);
+				sprintf(buffer, "%s %s",clients[ind].firstN,clients[ind].lastN);
+				if (send(new_fd, buffer, MAXDATASIZE, 0) == -1) perror("send");
+				memset(buffer,0,MAXDATASIZE);
+				printf("|%d|\n",clients[ind].clientNo);
+				sprintf(buffer,"%d",clients[ind].clientNo);
+				printf("||%s||\n",buffer);
+				if (send(new_fd, buffer, MAXDATASIZE, 0) == -1) perror("send");
+				// send account details
+			}
+			else {
+				if (send(new_fd, "UnAuth,",20,0) == -1) perror("send");
+			}
 			close(new_fd);
 			exit(0);
 		}
@@ -101,13 +115,14 @@ void  INThandler(int sig)
     printf("\n");
     printf("Signal Received: %d\n",sig);
     if(sig == 2){
-        printf("Closing the Server\n");
+        printf("-----------------Closing the Server-----------------\n");
 		printf("Freeing Clients\n");
 		free(clients);
 		// need to write new account balances
 		printf("Freeing Accounts\n");
 		free(accounts);
 		// need to write transaction history to text file
+		printf("--------------------Server Closed-------------------\n");
 		exit(0);
 	}
 }

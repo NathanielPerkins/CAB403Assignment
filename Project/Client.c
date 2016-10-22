@@ -12,7 +12,8 @@
 
 #define MAXDATASIZE 100 /* max number of bytes we can get at once */
 
-int8_t logon(int16_t sockfd);
+void logon(int16_t sockfd);
+void main_menu(int16_t sockfd);
 
 int main(int argc, char *argv[])
 {
@@ -55,21 +56,18 @@ int main(int argc, char *argv[])
 	}
 
 	logon(sockfd);
-
-	buf[numbytes] = '\0';
-
-	printf("Received: %s",buf);
+	main_menu(sockfd);
 
 	close(sockfd);
 
 	return 0;
 }
 
-int8_t logon(int16_t sockfd){
+void logon(int16_t sockfd){
 	char username[20];
 	char password[20];
 	char auth[20];
-	int8_t conn;
+	int8_t str_len;
 	printf("=========================================================\n");
 	printf("\n       Welcome to PatelPerkins Online Banking\n\n");
 	printf("=========================================================\n");
@@ -84,17 +82,46 @@ int8_t logon(int16_t sockfd){
 		printf("Error sending password\n");
 	}
 
-	if((conn = recv(sockfd,auth,20,0)) == -1){
+	if((str_len = recv(sockfd,auth,20,0)) == -1){
 		printf("Error receiving authentication token\n");
 	}
-	auth[conn] = '\0';
-	if(!strcmp(auth, "Auth")){
+	auth[str_len] = '\0';
+	// int8_t test;
+	if(strcmp(auth, "Auth") != 0){
 		printf("Password or username is incorrect: Closing Client\n");
-		return 0;
+		exit(EXIT_FAILURE); // close the client with unsuccessful logon
 	}
-	printf("%s successfully loged on: %s\n",username, auth);
-	for (int i = 0;i<5;i++){
-		printf("%c",auth[i]);
+}
+void main_menu(int16_t sockfd){
+	char buffer[MAXDATASIZE];
+	int8_t str_len;
+	printf("\nWelcome to the ATM system\n");
+	if((str_len = recv(sockfd,buffer,MAXDATASIZE,0)) == -1){
+		printf("Error receiving name\n");
 	}
-	return 1;
+	buffer[str_len] = '\0';
+	printf("You are logged on as %s\n",buffer);
+	if((str_len = recv(sockfd,buffer,MAXDATASIZE,0)) == -1){
+		printf("Error receiving Client Number\n");
+	}
+	buffer[str_len] = '\0';
+	printf("Client Number: %d\n",(int32_t)strtol(buffer,NULL,10));
+	printf("Please Enter a selection\n");
+	printf("<1> Account Balance\n");
+	printf("<2> Withdrawl\n");
+	printf("<3> Deposit\n");
+	printf("<4> Transfer\n");
+	printf("<5> Transaction Listing\n");
+	printf("<6> EXIT\n");
+	printf("Selection |1-6|: ");
+	char selection;
+	getchar();
+	selection = getchar();
+	while(selection < '0' || selection > '6'){
+		printf("Please enter a valid selection: ");
+		selection = getchar();
+		getchar();
+
+	}
+
 }

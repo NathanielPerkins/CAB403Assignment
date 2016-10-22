@@ -50,6 +50,6 @@ void open_Acc(struct Account *accounts, int8_t num_accounts, int8_t MAX_WIDTH);
 void Client_Init(struct Client *client);
 
 int8_t username_exists(struct Client *clients,int8_t num_clients,char *username);
-bool pin_correct(struct Client client,char pin);
+bool pin_correct(struct Client client,int32_t pin);
 
 #endif

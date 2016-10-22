@@ -131,16 +131,15 @@ void Client_Init(struct Client *client){
 }
 
 int8_t username_exists(struct Client *clients,int8_t num_clients,char *username){
-    printf("UE: num_clients = %d\n",num_clients);
-    printf("UE: %d\n",clients[9].pin);
     for(int16_t i = 0; i < num_clients; i++){
         if(!strcmp(username,clients[i].username)){
+            printf("client[%d]: %s %s requested access\n",i,clients[i].firstN,clients[i].lastN);
             return i;
         }
     }
     return -1;
 }
 
-bool pin_correct(struct Client client,char pin){
+bool pin_correct(struct Client client,int32_t pin){
     return (client.pin == pin);
 }
